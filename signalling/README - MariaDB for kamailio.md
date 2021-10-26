@@ -1,5 +1,5 @@
-Kamailio MariaDB
-
+# Kamailio MariaDB
+```
 $ mysql -u root -p
 Enter password: *****
 
@@ -48,3 +48,4 @@ MariaDB [mysql]> revoke drop on kamailio.subcriber from `skychatuc`@`%`;
 sudo systemctl stop mysql
 sudo rm -rf /var/lib/mysql/*
 sudo systemctl start mysql
+```
