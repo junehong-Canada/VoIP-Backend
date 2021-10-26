@@ -1,5 +1,4 @@
-RTPProxy
-
+```
 /etc/kamailio/kamailio.cfg
 loadmodule "rtpproxy.so"
 modparam("rtpproxy", "rtpproxy_sock", "udp:1xx.xx.xx.xx4:12221") # CUSTOMIZE ME
@@ -262,3 +261,4 @@ Treat all RTP/RTCP sessions as "assymetric", i.e. disable any NAT traversal feat
 5. Reload systemd configuration and restart your RTPProxy server.
 	sudo systemctl daemon-reload
 	sudo systemctl restart rtpproxy.service
+```
