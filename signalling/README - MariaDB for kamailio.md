@@ -1,4 +1,4 @@
-# Kamailio MariaDB
+# MariaDB for Kamailio
 ```
 $ mysql -u root -p
 Enter password: *****
