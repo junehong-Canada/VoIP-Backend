@@ -79,23 +79,19 @@ $ sudo turnserver -L 60.60.80.91:5349 -o -a -b turnserver.conf -f -r turn.inform
 $ turnserver -v -r  127.1.1:2222 -a -b turnuserdb.conf -c turnserver.conf -u custom-username -r 127.1.1:2222 -p custom-password
 $ sudo turnserver -L 64.141.83.122:5349 -o -a -b turnserver.conf -f -r voip.skychat.com:5349
 ```
-## 5. Permanently run TURN server instance
+## 5. Logging & Etc
 ```
-$ nohup turnserver -v -r  ip:port -a -b turnuserdb.conf -c turnserver.conf -u turn-username -r ip:port -p turn-password &
-   :
-$ nohup TURN-execution-command &
-```
-
-```
-1. turnserver
-2. turnadmin
-3. turnutils
-- turnutils_uclient
-- turnutils_peer
-- turnutils_stunclient
-- turnutils_rfc5769check
-
-$ turnserver
-$ turnadmin -a -u june -p Hello123 -r June
 $ sudo tail -f /var/log/coturn/turnserver.log
+```
+
+* turnadmin
+```
+$ turnadmin -a -u june -p Hello123 -r June
+```
+* turnutils
+```
+$ turnutils_uclient
+$ turnutils_peer
+$ turnutils_stunclient
+$ turnutils_rfc5769check
 ```
