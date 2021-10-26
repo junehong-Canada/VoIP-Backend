@@ -80,15 +80,3 @@ $ sudo systemctl enable coturn
 ```
 $ sudo tail -f /var/log/coturn/turnserver.log
 ```
-
-* turnadmin
-```
-$ turnadmin -a -u june -p Hello123 -r June
-```
-* turnutils
-```
-$ turnutils_uclient
-$ turnutils_peer
-$ turnutils_stunclient
-$ turnutils_rfc5769check
-```
