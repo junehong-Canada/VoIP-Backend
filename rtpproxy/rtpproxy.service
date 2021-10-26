@@ -1,0 +1,28 @@
+[Unit]
+Description=RTPProxy media server
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+PIDFile=/var/run/rtpproxy/rtpproxy.pid
+Environment='OPTIONS= -f -l 0.0.0.0 -m 35000 -M 65000 -d INFO:LOG_DAEMON'
+
+ExecStartPre=-/bin/mkdir /var/run/rtpproxy
+ExecStartPre=-/bin/chown rtpproxy:rtpproxy /var/run/rtpproxy
+
+ExecStart=/usr/local/bin/rtpproxy -p /var/run/rtpproxy/rtpproxy.pid -s udp:10.1.2.126:7722 -u rtpproxy:rtpproxy $OPTIONS
+ExecStop=/usr/bin/pkill -F /var/run/rtpproxy/rtpproxy.pid
+
+ExecStopPost=-/bin/rm -R /var/run/rtpproxy
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=rtpproxy
+SyslogFacility=local5
+
+TimeoutStartSec=10
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
