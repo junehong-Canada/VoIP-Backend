@@ -26,11 +26,20 @@ supervised systemd
 	:
 databases 16 # 0 ~ 15
 	:
-requirepass 2}U5h4K3DHVZb+ce
+requirepass Hello123
 ```
+#### 0.2.2. Start the Redis service
+```
+$ sudo systemctl start redis.service
+```
+#### 0.2.3. Make the Redis to start on boot
+```
+$ sudo systemctl enable redis
+```
+#### 0.2.4. Test the Redis using redis-cli
 ```
 $ redis-cli
-127.0.0.1:6379> auth 2}U5h4K3DHVZb+ce
+127.0.0.1:6379> auth Hello123
 127.0.0.1:6379> set key1 10
 127.0.0.1:6379> get key 1
 ```
@@ -46,40 +55,19 @@ $ sudo vi /etc/coturn/turnserver.conf
 listening-port=3478
 tls-listening-port=5349
 	:
-fingerprint
-lt-cred-mech
+#fingerprint
 	:
-server-name=voip
-realm=skychat.com
+#lt-cred-mech
 	:
-user=username3:password3
+server-name=voip.skychat.com
 	:
-redis-userdb="ip=localhost dbname=2 password=2}U5h4K3DHVZb+ce port=6379 connect_timeout=60"
-
-user=username:password
-   :
-# listening-port=3478  # default TCP & UDP
-   :
-tls-listening-port=5349
-   :
-external-ip=64.141.83.122/10.89.89.60
-   :
+redis-userdb="ip=localhost dbname=2 password=Hello123 port=6379 connect_timeout=60"
+   	:
+external-ip=64.141.83.122
+	:
 min-port=10000
-max-port=25000
-   :
-# use-auth-secret
-# static-auth-secret=E2"*U8&(m@AAZ6AB
-   :
-redis-userdb="ip=127.0.0.1 dbname=2 connect_timeout=30"
-
-realm=voip.skychat.com
-   :
-no-udp
-   :
-cert=/etc/pki/coturn/public/turn_server_cert.pem
-pkey=/etc/pki/coturn/private/turn_server_pkey.pem
-   :
-no-cli
+max-port=20000
+   	:
 ```
 ## 3. Configure Firewall
 ```
