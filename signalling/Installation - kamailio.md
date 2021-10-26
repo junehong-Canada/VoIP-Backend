@@ -1,8 +1,9 @@
-Kamailio Installation
+# Kamailio Installation
 
 https://computingforgeeks.com/how-to-install-latest-kamailio-sip-server-on-centos-linux/
 
-1. Set SELinux to a permissive/Disabled mode
+## 1. Set SELinux to a permissive/Disabled mode
+```
 $ sudo setenforce 0
 $ sudo sed -i 's/^SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config
 $ sestatus
@@ -16,24 +17,29 @@ Policy MLS status:              enabled
 Policy deny_unknown status:     allowed
 Memory protection checking:     actual (secure)
 Max kernel policy version:      33
-
-2. Install MariaDB
+```
+## 2. Install MariaDB
+```
 $ sudo yum -y install mariadb-server
 $ sudo systemctl enable --now mariadb
 $ sudo mysql_secure_installation
-
-3. Install Kamailio
+```
+## 3. Install Kamailio
+```
 $ sudo dnf -y install dnf-plugins-core
 $ sudo dnf config-manager –add-repo https://rpm.kamailio.org/centos/kamailio.repo
 $ sudo yum install vim kamailio kamailio-presence kamailio-ldap kamailio-mysql kamailio-debuginfo kamailio-xmpp kamailio-unixodbc kamailio-utils kamailio-tls kamailio-outbound kamailio-gzcompress
 $ kamailio -version
 version: kamailio 5.5.0
+```
 Or
+```
 $ sudo dnf -y install dnf-plugins-core
 $ sudo dnf config-manager --add-repo https://rpm.kamailio.org/centos/kamailio.repo
-$ sudo dnf install kamailioa
-
-4. Configure Mariadb Database
+$ sudo dnf install kamailio
+```
+## 4. Configure Mariadb Database
+```
 $ sudo vi /etc/kamailio/kamctlrc
 DBENGINE=MYSQL
 DBHOST=localhost
@@ -48,6 +54,8 @@ DBHOST=localhost
 
 ## password for database read only user
 # DBROPW="kamailioro"
+```
+```
 $ sudo vi /etc/kamailio/kamailio.cfg
 #!define WITH_MYSQL
 #!define WITH_AUTH
@@ -60,15 +68,20 @@ $ kamdbctl create
 $ sudo firewall-cmd --permanent --add-port=5060/udp
 $ sudo firewall-cmd --reload
 $ sudo firewall-cmd --list-ports
+```
 
 • Clear and Backup database
+```
 $ sudo systemctl stop mysql
 
 $ sudo rm -rf /var/lib/mysql/*				<= clear database
 $ sudo cp -r /var/lib/mysql/* /var/lib/mysql_back/*	<= backup database
 
 $ sudo systemctl start mysql
+```
 
+* kamailio module list
+```
  kamailio   - very fast and configurable SIP proxy
  kamailio-autheph-modules - authentication using ephemeral credentials module for Kamailio
  kamailio-berkeley-bin - Berkeley database module for Kamailio - helper program
@@ -107,3 +120,4 @@ $ sudo systemctl start mysql
  kamailio-websocket-modules - Websocket module for kamailio
  kamailio-xml-modules - XML based extensions for Kamailio's Management Interface
  kamailio-xmpp-modules - XMPP gateway module for Kamailio
+```
