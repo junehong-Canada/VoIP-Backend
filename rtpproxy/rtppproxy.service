@@ -1,0 +1,57 @@
+RTPProxy.service
+
+[Unit]
+Description=RTPProxy media server
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+PIDFile=/var/run/rtpproxy/rtpproxy.pid
+Environment='OPTIONS= -f -L 4096 -l 0.0.0.0 -m 10000 -M 20000 -d INFO:LOG_LOCAL5'
+
+-f -L 4096 -l 0.0.0.0 -m 10000 -M 20000 -d INFO:LOG_LOCAL5
+-f -l 0.0.0.0 -m 10000 -M 20000 -d INFO:LOG_DAEMON
+
+DBUG, INFO, WARN, ERR and CRIT
+LOG_DAEMON, LOG_LOCAL0 through LOG_LOCAL7
+
+Restart=always
+RestartSec=5
+
+ExecStartPre=-/bin/mkdir /var/run/rtpproxy
+ExecStartPre=-/bin/chown rtpproxy:rtpproxy /var/run/rtpproxy
+
+ExecStart=/usr/local/bin/rtpproxy -p /var/run/rtpproxy/rtpproxy.pid -s unix:/var/run/rtpproxy/rtpproxy.sock -u rtpproxy rtpproxy -n unix:/var/run/rtpproxy/rtpproxy_timeout.sock $OPTIONS
+ExecStart=/usr/local/bin/rtpproxy -p /var/run/rtpproxy/rtpproxy.pid -s systemd:                             -u rtpproxy:rtpproxy -n unix:/var/run/rtpproxy/rtpproxy_timeout.sock $OPTIONS
+
+
+ExecStart=/usr/local/bin/rtpproxy -p /var/run/rtpproxy/rtpproxy.pid -s systemd: -u rtpproxy:rtpproxy -n unix:/var/run/rtpproxy/rtpproxy_timeout.sock $OPTIONS
+
+ExecStop=/usr/bin/pkill -F /var/run/rtpproxy/rtpproxy.pid
+
+ExecStopPost=-/bin/rm -R /var/run/rtpproxy
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=rtpproxy
+SyslogFacility=local5
+
+TimeoutStartSec=10
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
+---------------------------------------------------------------------------------------------------------------------
+/etc/systemd/system/sockets.target.wants/rtpproxy.socket (better to create it in /lib/systemd/system/sockets.target.wants/ and symlink it)
+
+[Socket]
+ListenStream=/var/run/rtpproxy/rtpproxy.sock
+SocketUser=rtpproxy
+SocketGroup=rtpproxy
+SocketMode=755
+ExecStartPost=-/bin/chown rtpproxy:rtpproxy /var/run/rtpproxy
+
+[Install]
+WantedBy=sockets.target
+---------------------------------------------------------------------------------------------------------------------
