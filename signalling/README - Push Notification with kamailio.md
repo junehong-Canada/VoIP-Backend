@@ -1,19 +1,16 @@
-Push Notification with Kamailio
+# Push Notification with Kamailio
 
 https://denys-pozniak.medium.com/apple-push-notification-with-kamailio-eeca2f8e08d
 
-	•			Asterisk sends SIP INVITE to Kamailio SIP Proxy
-	•			Kamailio detects device type by specific X-header and freezes incoming SIP transaction
-	•			Kamailio sends “push” via http request to PHP script
-	•			Once Kamailio detects new REGISTER from device, it resumes transaction
-	•			Kamailio sends SIP INVITE to the subscriber
+1. Caller sends SIP INVITE to Kamailio SIP Proxy
+2. Kamailio detects device type by specific X-header and freezes incoming SIP transaction
+3. Kamailio sends “push” via http request to PHP script
+4. Once Kamailio detects new REGISTER from device, it resumes transaction
+5. Kamailio sends SIP INVITE to the subscriber
 
-
-Module settings:
-#htable module setting. vtp keeps transaction details.
-modparam("htable", "htable", "vtp=>size=10;autoexpire=120;")
 
 Kamailio script building blocks:
+```
 #Detecting device type via custom SIP header X-phone.
 if ( (is_method("INVITE")) && (!has_totag()) && ($(hdr(X-phone) =~ "iphone") ) {
   send_reply("100", "Suspending");
@@ -33,8 +30,9 @@ route[SUSPEND] {
     route(SENDPUSH);
     exit;
   }
-
+```
 In my case Kamailio runs the intermediate PHP script (push.php) with needed parameters for sending request to APN. You might use app_lua module to push directly from Kamailio.
+```
 #Below is a pushing service. It calls push.php script with parameters. Htable $sht(tokens=>$rU) keeps needed token. And after PHP script connects to APN.
 route[SENDPUSH] {
   ...
@@ -63,6 +61,6 @@ route[RESUME] {
   t_relay();
   exit;
 }
-
+```
 Sngrep call-flow example:
 ￼
