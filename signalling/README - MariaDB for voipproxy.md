@@ -1,4 +1,4 @@
-# MariaDB for Kamailio
+# MariaDB for VoIP proxyserver
 ```
 $ mysql -u root -p
 Enter password: *****
@@ -22,30 +22,14 @@ MariaDB> select host, user, password from user;
 +-----------+--------------+-------------------------------------------+
 
 *** Add user
-MariaDB> create user '계정아이디'@'접속위치' identified by '패스워드';
-ex. create user 'user1'@'%' identified by 'user!@#$';
 MariaDB [mysql]> create user 'skychatuc'@'%' identified by 'skychatucrw';
-
-MariaDB> grant all privileges on DB이름.테이블 to '계정아이디'@'접속위치';
-ex. grant all privileges on testDB.* to 'user1'@'localhost'; //localhost 는 내부에서만 접속가능
-    grant all privileges on testDB.* to 'user1'@'%';
 MariaDB [mysql]> grant all privileges on kamailio.* to 'skychatuc'@'%';
 
 *** Show user info.
-MariaDB> show grants for 'user1'@'접속위치';
 MariaDB [mysql]> show grants for 'skychatuc'@'%';
 
 *** Delete user
-MariaDB> drop user '계정아이디'@'접속위치';
-ex. drop user 'user1'@'%';
-
-권한 삭제
-MariaDB> revoke all on DB이름.테이블 FROM '계정아이디'@'접속위치';
+MariaDB> drop user 'user1'@'%';
 MariaDB [mysql]> revoke all on kamailio.subscriber from 'skychatuc'@'%';
 MariaDB [mysql]> revoke drop on kamailio.subcriber from `skychatuc`@`%`;
-
-*** Reset All databases and add access account for proxy
-sudo systemctl stop mysql
-sudo rm -rf /var/lib/mysql/*
-sudo systemctl start mysql
 ```
