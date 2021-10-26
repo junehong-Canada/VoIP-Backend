@@ -62,6 +62,8 @@ max-port=20000
 ```
 ## 3. Configure Firewall
 ```
+$ sudo firewall-cmd --zone=public --permanent --add-port=3478/tcp
+$ sudo firewall-cmd --zone=public --permanent --add-port=3478/udp
 $ sudo firewall-cmd --zone=public --permanent --add-port=5349/tcp
 $ sudo firewall-cmd --zone=public --permanent --add-port=5349/udp
 $ sudo firewall-cmd --zone=public --permanent --add-port=10000-20000/udp
