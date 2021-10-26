@@ -43,7 +43,7 @@ $ redis-cli
 $ yum search coturn
 $ sudo yum install coturn
 ```
-## 2. Turn Server Configuration
+## 2. Turn Server Configuration <= To do: TLS
 ```
 $ sudo vi /etc/coturn/turnserver.conf
 	:
