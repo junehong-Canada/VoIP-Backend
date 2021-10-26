@@ -90,8 +90,5 @@ $ sudo firewall-cmd --reload
 $ sudo firewall-cmd --zone=public --list-ports
 ```
 ### 6) Edit kamailio.cfg
-```
-$ sudo vi /etc/kamailio/kamailio.cfg
-#!define WITH_NAT
-modparam("rtpproxy", "rtpproxy_sock", "udp: 10.89.89.60:7722")
-```
+README - RTPProxy with kamailio.md:<br>
+https://github.com/junehong-Canada/VoIP-Backend/blob/main/signalling/README%20-%20RTPProxy%20with%20kamailio.md
