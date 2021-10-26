@@ -50,11 +50,11 @@ $ sudo vi /etc/coturn/turnserver.conf
 listening-port=3478
 tls-listening-port=5349
 	:
-server-name=voip.skychat.com
+server-name=voip.skychat.com <=== change to domain name of instance
 	:
 redis-userdb="ip=localhost dbname=2 password=Hello123 port=6379 connect_timeout=60"
    	:
-external-ip=64.141.83.122
+external-ip=64.141.83.122 # <=== change to Public IP of instance
 	:
 min-port=10000
 max-port=20000
