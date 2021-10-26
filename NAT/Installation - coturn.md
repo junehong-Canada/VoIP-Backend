@@ -69,15 +69,12 @@ $ sudo firewall-cmd --zone=public --permanent --add-port=10000-20000/udp
 $ sudo firewall-cmd --reload
 $ sudo firewall-cmd --zone=public --list-ports
 ```
-## 4. Start Turn Server
+## 4. Start Turn Server and make it to start on boot
 ```
-$ sudo turnserver -L 60.60.80.91 -o -a -b turnserver.conf -f -r turn.informaticar.net
+$ sudo systemctl start coturn
 ```
-or
 ```
-$ sudo turnserver -L 60.60.80.91:5349 -o -a -b turnserver.conf -f -r turn.informaticar.net:5349
-$ turnserver -v -r  127.1.1:2222 -a -b turnuserdb.conf -c turnserver.conf -u custom-username -r 127.1.1:2222 -p custom-password
-$ sudo turnserver -L 64.141.83.122:5349 -o -a -b turnserver.conf -f -r voip.skychat.com:5349
+$ sudo systemctl enable coturn
 ```
 ## 5. Logging & Etc
 ```
