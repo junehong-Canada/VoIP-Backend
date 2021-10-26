@@ -87,4 +87,4 @@ route[PUSHJOIN] {
 #!endif
 ```
 Sngrep call-flow example: <br>
-![Sngrep call-flow example](https://github.com/junehong-Canada/VoIP-Backend/blob/main/signalling/call-flow.png)
+![Sngrep call-flow example](./call-flow.png)
