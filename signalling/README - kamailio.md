@@ -1,39 +1,7 @@
 # Kamailio
 
-* Account Management
-- Add new user
-```
-$ kamctl add 100@skychat.com 100passwd
-```
-=> All users inforamtion are stored in table "kamailio.subscriber".
-```
-$ kamctl db show subscriber
-$ kamctl db show presentity
-```
-```
-$ kamctl rm 100@skychat.com
-```
-```
-/etc/my.cnf.d/mariadb-server.cnf
-bind-address=0.0.0.0
-```
-
-* Ports
-```
-# open port
-sudo firewall-cmd --permanent --add-port=5060/udp
-# reload
-sudo firewall-cmd --reload
-# list open ports
-sudo firewall-cmd --list-ports
-```
-* The Kamailio Logging
-```
-$ journalctl -u kamailio.service -f
-```
-
-### Features of Kamailio
-Kamailio’s main advantages for use alongside Media server like Asterisk are:
+## Features of Kamailio
+* Kamailio’s main advantages for use alongside Media server like Asterisk are:
 ```
 Kamailio can handle over 5000 call setups per second.
 Can serve up to 300,000 active subscribers with just a 4GB Ram System.
