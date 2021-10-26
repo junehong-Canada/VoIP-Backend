@@ -11,56 +11,80 @@ https://denys-pozniak.medium.com/apple-push-notification-with-kamailio-eeca2f8e0
 
 Kamailio script building blocks:
 ```
-#Detecting device type via custom SIP header X-phone.
-if ( (is_method("INVITE")) && (!has_totag()) && ($(hdr(X-phone) =~ "iphone") ) {
-  send_reply("100", "Suspending");
-  route(SUSPEND);
+$ sudo vi /etc/kamailio/kamailio.cfg
+    :
+#!define WITH_SENDPUSH
+    :
+#!ifdef WITH_SENDPUSH
+loadmodule "htable.so"
+loadmodule "http_client.so"
+#!endif
+    :
+#!ifdef WITH_SENDPUSH
+/* vtp keeps transaction details. */
+modparam("htable", "htable", "vtp=>size=10;autoexpire=120;")
+modparam("http_client", "httpcon", "pushserver=>http://localhost:8888");
+#!endif
+    :
+# send the push notification
+#!ifdef WITH_SENDPUSH
+	route(PUSHASYNC);
+#!endif
+    :
+#!ifdef WITH_SENDPUSH
+# Do push in async mode
+route[PUSHASYNC] {
+	if (!is_method("INVITE"))
+		return;
+	
+	if (registered("location"))
+		return;
+
+	route(SENDPUSH);
+
+	if (!t_suspend()) {
+		xlog("failed suspending transaction [$T(id_index):$T(id_label)]\n");
+		send_reply("501", "Unknown destination");
+		exit;
+	}
+	xdbg("suspended transaction [$T(id_index):$T(id_label)] $fU => $rU\n");
+	$sht(vtp=>join::$rU) = "" + $T(id_index) + ":" + $T(id_label);
+	xdbg("htable key value [$sht(vtp=>join::$rU)]\n");
+	exit;
 }
-#Suspending transaction and store index and label in vtp for the future needs.
-route[SUSPEND] {
-  if ( !t_suspend() ) {
-    xlog("L_ERROR","[SUSPEND]  failed suspending trasaction [$T(id_index):$T(id_label)]\n");
-    send_reply("501", "Suspending error");
-    exit;
-  } else {
-    xlog("L_INFO","[SUSPEND]  suspended transaction [$T(id_index):$T(id_label)] $fU=> $rU\n");
-    $sht(vtp=>id_index::$rU) = $T(id_index);
-    $sht(vtp=>id_label::$rU) = $T(id_label);
-    xlog("L_INFO","[SUSPEND] htable key value [$sht(vtp=>id_index::$rU)   --   $sht(vtp=>id_label::$rU)]\n");
-    route(SENDPUSH);
-    exit;
-  }
-```
-In my case Kamailio runs the intermediate PHP script (push.php) with needed parameters for sending request to APN. You might use app_lua module to push directly from Kamailio.
-```
-#Below is a pushing service. It calls push.php script with parameters. Htable $sht(tokens=>$rU) keeps needed token. And after PHP script connects to APN.
+
 route[SENDPUSH] {
-  ...
-  http_client_query("http://url/push.php", "user=$rU\r\npn-tok=$sht(tokens=>$rU)\r\n","Content-Type: text/plain", "$var(result)");
-  ...
-  sl_send_reply("100", "Pushing");
+	# POST-Request
+	# $var(res) = http_connect("pushserver", "/sipuser/sendpush", "application/json", "{ username : [$T(id_index)] }", "$avp(gurka)");
+	xlog("L_INFO", "===> Suspend call from [$fU] to [$tU] and send push notification");
+	http_client_query("http://localhost:8888/sipuser/sendpush/$tU", "$var(result)");
+	xlog("L_INFO", "===> Result is $var(result)");
+	send_reply("110", "Push sent");
+} 
+#!endif
+    :
+#!ifdef WITH_SENDPUSH
+	route(PUSHJOIN);
+#!endif
+    :
+#!ifdef WITH_SENDPUSH
+# Join pending INVITE with the incoming REGISTER
+route[PUSHJOIN] {
+	if (!is_method("REGISTER"))
+		return;
+	$var(hjoin) = 0;
+#	lock("$tU");
+	$var(hjoin) = $sht(vtp=>join::$tU);
+	$sht(vtp=>join::$tU) = $null;
+#	unlock("$tU);
+	if ($var(hjoin)==0)
+		return;
+	$var(id_index) = $(var(hjoin){s.select,0,:}{s.int});
+	$var(id_label) = $(var(hjoin){s.select,1,:}{s.int});
+	xdbg("resuming transaction [$var(id_index):$var(id_label)] $tU ($var(hjoin))\n");
+	t_continue("$var(id_index)", "$var(id_label)", "LOCATION");
 }
-
-Here we are detecting incoming REGISTER message from pushed device:
-#Unfreezing by new incoming REGISTER message.
-if ( (is_method("REGISTER")) && (($hdr(Expires) != "0") || ($hdr(Contact) !~ "expires=0")) && ($sht(vtp=>id_index::$tU) != $null) ) {
-  xlog("L_INFO", "New $rm ru=$ru tu=$tu \n");
-  route(JOIN);
-}
-
-Resuming SIP transaction using stored label and index:
-#Resuming transaction.
-route[JOIN] {
-  xlog("L_INFO","[JOIN] htable key value [$sht(vtp=>id_index::$tU)   --   $sht(vtp=>id_label::$tU)]\n");
-  t_continue("$sht(vtp=>id_index::$tU)", "$sht(vtp=>id_label::$tU)", "RESUME");
-}
-#Lookup into location database and relaying.
-route[RESUME] {
-  lookup("location");
-  xlog("L_INFO","[RESUME] rm=$rm ru=$ru du=$du \n");
-  t_relay();
-  exit;
-}
+#!endif
 ```
 Sngrep call-flow example: <br>
 ![Sngrep call-flow example](https://github.com/junehong-Canada/VoIP-Backend/blob/main/signalling/call-flow.png)
