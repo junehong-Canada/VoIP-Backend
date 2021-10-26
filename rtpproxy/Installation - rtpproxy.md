@@ -6,10 +6,14 @@ https://www.rtpproxy.org/doc/master/user_manual.html#MAKESRC <br>
 https://computingforgeeks.com/how-to-install-rtpproxy-from-source-in-centos-linux/ <br>
 https://dopensource.com/2017/05/31/installing-configuring-rtpproxy/ <br>
 
-## 0. Install pre-req’s
+## 0. Prerequisite
 ```
 $ sudo yum -y update
 $ sudo dnf group install “Development Tools”
+$ sudo yum install systemd-devel
+$ sudo yum install centos-release-scl
+$ sudo yum install devtoolset-9-gcc*
+$ scl enable devtoolset-9 bash
 ```
 ## 1. Download source code, build, and install
 ```
@@ -20,27 +24,44 @@ $ make
 $ sudo make install
 ```
 ## 2. Configuration
-- init.d and systemd: The system is the most relevant solution
-### 2.1. init.d
-#### 1) Copy init.d script to /etc/rc.d/init.d directory and make it executable.
+### 1) Check the location of RTPProxy executable file
 ```
-$ sudo cp rpm/rtpproxy.init /etc/rc.d/init.d/rtpproxy
-$ sudo chmod +x /etc/rc.d/init.d/rtpproxy
+$ which rtpproxy
+/usr/local/bin/rtpproxy
 ```
-#### 2) Edit /etc/rc.d/init.d/rtpproxy file
+### 2) Create rtpproxy.service system unit file
+- create it in /lib/systemd/system/rtpproxy.service and symlink it /etc/systemd/system/rtpproxy.service -> /lib/systemd/system/rtpproxy.service
 ```
-$ sudo vi /etc/rc.d/init.d/rtpproxy
-# processname: rtpproxy
-# pidfile: /var/run/rtpproxy/rtpproxy.pid
+[Unit]
+Description=RTPProxy media server
+After=network.target
+Requires=network.target
 
-prog=rtpproxy
-rtpproxy=/usr/local/bin/$progsystemctl
+[Service]
+Type=simple
+PIDFile=/var/run/rtpproxy/rtpproxy.pid
+Environment='OPTIONS= -f -l 0.0.0.0 -m 35000 -M 65000 -d INFO:LOG_DAEMON'
 
-user=rtpproxy
-lockfile=/var/lock/subsys/$prog
-pidfile=/var/run/rtpproxy/$prog.pid
+ExecStartPre=-/bin/mkdir /var/run/rtpproxy
+ExecStartPre=-/bin/chown rtpproxy:rtpproxy /var/run/rtpproxy
+
+ExecStart=/usr/local/bin/rtpproxy -p /var/run/rtpproxy/rtpproxy.pid -s udp:10.89.89.61:7722 -u rtpproxy:rtpproxy $OPTIONS
+ExecStop=/usr/bin/pkill -F /var/run/rtpproxy/rtpproxy.pid
+
+ExecStopPost=-/bin/rm -R /var/run/rtpproxy
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=rtpproxy
+SyslogFacility=local5
+
+TimeoutStartSec=10
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
 ```
-#### 3) Add a user and group
+### 3) Add a user and group
 ```
 $ sudo mkdir -p /var/run/rtpproxy
 $ sudo groupadd -g 8002 rtpproxy
@@ -54,27 +75,21 @@ $ sudo groupadd rtpproxy
 $ sudo useradd -g rtpproxy -d /var/run/rtpproxy -M -s /bin/false rtpproxy
 $ sudo chown rtpproxy:rtpproxy -R /var/run/rtpproxy
 ```
-#### 4) Check the location of RTPProxy executable file
+
+### 4) Reload systemd configuration and enable rtpproxy.service:
 ```
-$ which rtpproxy
-/usr/local/bin/rtpproxy
+$ sudo systemctl daemon-reload
+$ sudo systemctl start rtpproxy.service
+$ sudo systemctl enable rtpproxy.service
 ```
-#### 5) Edit OPTIONS and firewall. And kamailio.cfg
-```
-$ sudo vi /etc/sysconfig/rtpproxy
-OPTIONS=" -l 192.168.1.60 -s unix:/var/run/rtpproxy.sock"
-// Rtpproxy will listen on ip: 192.168.1.60, control socket being unix:/var/run/rtpproxy.sock.
-CONTROL_SOCK=udp:127.0.0.1:7722
-// To make it listen on an UDP socket.
-$ sudo vi /etc/sysconfig/rtpproxy
-OPTIONS=" -F -l 10.89.89.60 -A 64.141.83.122 -m 20000 -M 30000 -s udp:10.89.89.60:7722 -d DBUG:LOG_LOCAL5"
-```
+### 5) Edit firewall.
 ```
 $ sudo firewall-cmd --zone=public --permanent --add-port=7722/udp
 $ sudo firewall-cmd --zone=public --permanent --add-port=35000-65000/udp
 $ sudo firewall-cmd --reload
 $ sudo firewall-cmd --zone=public --list-ports
 ```
+### 6) Edit kamailio.cfg
 ```
 $ sudo vi /etc/kamailio/kamailio.cfg
 #!define WITH_NAT
@@ -98,63 +113,4 @@ if [ -f "$rtpproxy_prog" ] && [ -x "$rtpproxy_prog" ]; then
 fi
 EOF
 ```
-```
-$ sudo source /etc/profile & source ~/.bashrc
 
-$ sudo chkconfig rtpproxy on
-```
-### 2.2. systemd
-#### 2.2.1. Create rtpproxy.socket system unit file
-- /etc/systemd/system/sockets.target.wants/rtpproxy.socket (better to create it in /lib/systemd/system/sockets.target.wants/ and symlink it)
-```
-[Socket]
-ListenStream=/var/run/rtpproxy/rtpproxy.sock
-SocketUser=rtpproxy
-SocketGroup=rtpproxy
-SocketMode=755
-ExecStartPost=-/bin/chown rtpproxy:rtpproxy /var/run/rtpproxy
-
-[Install]
-WantedBy=sockets.target
-2.2.2. Set a parameter in startup row of rtpproxy.service unit
-[Unit]
-Description=RTPProxy media server
-After=network.target
-Requires=network.target
-
-[Service]
-Type=simple
-PIDFile=/var/run/rtpproxy/rtpproxy.pid
-Environment='OPTIONS= -f -L 4096 -l 0.0.0.0 -m 10000 -M 20000 -d INFO:LOG_LOCAL5'
-
-Restart=always
-RestartSec=5
-
-ExecStartPre=-/bin/mkdir /var/run/rtpproxy
-ExecStartPre=-/bin/chown rtpproxy:rtpproxy /var/run/rtpproxy
-
-ExecStart=/usr/local/bin/rtpproxy -p /var/run/rtpproxy/rtpproxy.pid -s unix:/var/run/rtpproxy/rtpproxy.sock -u rtpproxy rtpproxy -n unix:/var/run/rtpproxy/rtpproxy_timeout.sock $OPTIONS
-
-ExecStart=/usr/local/bin/rtpproxy -p /var/run/rtpproxy/rtpproxy.pid -s systemd: -u rtpproxy:rtpproxy -n unix:/var/run/rtpproxy/rtpproxy_timeout.sock -f -l 0.0.0.0 -m 10000 -M 20000 -d INFO:LOG_DAEMON
-
-ExecStop=/usr/bin/pkill -F /var/run/rtpproxy/rtpproxy.pid
-
-ExecStopPost=-/bin/rm -R /var/run/rtpproxy
-
-StandardOutput=syslog
-StandardError=syslog
-SyslogIdentifier=rtpproxy
-SyslogFacility=local5
-
-TimeoutStartSec=10
-TimeoutStopSec=10
-
-[Install]
-WantedBy=multi-user.target
-3. Reload systemd configuration and enable socket unit:
-bash> sudo systemctl daemon-reload
-bash> sudo systemctl enable rtpproxy.socket
-
-bash> sudo systemctl start rtpproxy.socket
-bash> sudo systemctl start rtpproxy.service
-```
