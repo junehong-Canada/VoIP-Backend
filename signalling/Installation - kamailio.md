@@ -27,18 +27,11 @@ $ sudo mysql_secure_installation
 ## 3. Install Kamailio
 ```
 $ sudo dnf -y install dnf-plugins-core
-$ sudo dnf config-manager –add-repo https://rpm.kamailio.org/centos/kamailio.repo
-$ sudo yum install vim kamailio kamailio-presence kamailio-ldap kamailio-mysql kamailio-debuginfo kamailio-xmpp kamailio-unixodbc kamailio-utils kamailio-tls kamailio-outbound kamailio-gzcompress
-$ kamailio -version
-version: kamailio 5.5.0
-```
-Or
-```
-$ sudo dnf -y install dnf-plugins-core
 $ sudo dnf config-manager --add-repo https://rpm.kamailio.org/centos/kamailio.repo
-$ sudo dnf install kamailio
+$ sudo dnf install kamailio 
+$ sudo yum install kamailio-presence kamailio-ldap kamailio-mysql kamailio-debuginfo kamailio-xmpp kamailio-unixodbc kamailio-utils kamailio-tls kamailio-outbound kamailio-gzcompress
 ```
-## 4. Configure Mariadb Database
+## 4. Configure for Mariadb Database
 ```
 $ sudo vi /etc/kamailio/kamctlrc
 DBENGINE=MYSQL
@@ -55,6 +48,7 @@ DBHOST=localhost
 ## password for database read only user
 # DBROPW="kamailioro"
 ```
+## 5. Configure for Mariadb Database and etc
 ```
 $ sudo vi /etc/kamailio/kamailio.cfg
 #!define WITH_MYSQL
@@ -63,13 +57,54 @@ $ sudo vi /etc/kamailio/kamailio.cfg
 #!define WITH_PRESENCE
 #!define WITH_NAT
 #!define WITH_ACCDB
-$ sudo service mysql start
+
+# #!define WITH_TLS
+
+#!define WITH_SENDPUSH
+
+# #!define WITH_DEBUG
+```
+## 6. Start Mariadb Database, create database for accounts management, and start kamailio.
+```
+$ sudo systemctl start mariadb
 $ kamdbctl create
+$ sudo systemctl start kamailio
+```
+## 7. Account Management
+* All users inforamtion are stored in table "kamailio.subscriber"
+```
+$ kamctl db show subscriber
+```
+* Add new user
+```
+$ kamctl add 100@skychat.com 100passwd
+```
+* Delete new user
+```
+$ kamctl rm 100@skychat.com
+```
+
+## 8. Add Firebase ID into accounts management table.
+```
+$ mysql -u -root -p
+Enter password: *****
+MariaDB [(none)]> use kamailio;
+MariaDB [kamailio]> ALTER TABLE subscriber ADD fcmId varchar(255) NOT NULL AFTER ha1b;
+MariaDB [kamailio]> ALTER TABLE subscriber CHANGE COLUMN fcmId fcm_id varchar(255) NOT NULL;
+MariaDB [kamailio]> commit;
+```
+## 9. Firewall
+```
 $ sudo firewall-cmd --permanent --add-port=5060/udp
 $ sudo firewall-cmd --reload
 $ sudo firewall-cmd --list-ports
 ```
 
+## 9. Etc
+• Logging
+```
+$ journalctl -u kamailio.service -f
+```
 • Clear and Backup database
 ```
 $ sudo systemctl stop mysql
@@ -79,8 +114,7 @@ $ sudo cp -r /var/lib/mysql/* /var/lib/mysql_back/*	<= backup database
 
 $ sudo systemctl start mysql
 ```
-
-* kamailio module list
+• kamailio module list
 ```
  kamailio   - very fast and configurable SIP proxy
  kamailio-autheph-modules - authentication using ephemeral credentials module for Kamailio
