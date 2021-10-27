@@ -1,0 +1,15 @@
+[Unit] 
+Description=SKY Chat VoIP Proxy 
+After=syslog.target
+After=network.target
+
+[Service] 
+ExecStart=/usr/bin/java -jar /home/june/voip_proxy/proxyserver-0.0.1-SNAPSHOT.jar 
+Restart=always 
+StandardOutput=syslog 
+StandardError=syslog 
+SyslogIdentifier=voip_proxy  
+
+[Install] 
+WantedBy=multi-user.target
+
